@@ -12,8 +12,10 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
+
 import unittest
 from sippycode.http import core
+
 
 class UriTest(unittest.TestCase):
   
@@ -36,8 +38,32 @@ class UriTest(unittest.TestCase):
     self.assert_(request.headers == {})
     self.assert_(request.body is None)
     
-
+  def test_stamp_http_with_set_port(self):
+    request = core.HttpRequest(port=8080, method='POST', body='hello')
+    uri = core.parse_uri('//example.com/greet')
+    self.assert_(uri.query == {})
+    self.assert_(uri.get_relative_path() == '/greet')
+    self.assert_(uri.host == 'example.com')
+    self.assert_(uri.port is None)
     
+    uri.stamp(request)
+    self.assert_(request.host == 'example.com')
+    self.assert_(request.scheme == 'http')
+    self.assert_(request.port == 8080)
+    self.assert_(request.uri == '/greet')
+    self.assert_(request.method == 'POST')
+    
+  def test_stamp_use_default_ssl_port(self):
+    request = core.HttpRequest(scheme='https', method='PUT', body='hello')
+    uri = core.parse_uri('/greet')
+    uri.stamp(request)
+    self.assert_(request.host is None)
+    self.assert_(request.scheme == 'https')
+    self.assert_(request.port == 443)
+    self.assert_(request.uri == '/greet')
+    self.assert_(request.method == 'PUT')
+    
+
 def get_suite():
   pass
 

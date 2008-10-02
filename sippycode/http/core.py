@@ -108,7 +108,7 @@ class Uri(object):
           urllib.quote_plus(str(value)))))
     return '&'.join(param_pairs)
 
-  def get_full_path(self):
+  def get_relative_path(self):
     """Returns the path with the query parameters escaped and appended."""
     param_string = self._get_query_string()
     if param_string:
@@ -121,30 +121,28 @@ class Uri(object):
     if http_request is None:
       http_request = HttpRequest()
     # Determine the correct scheme.
-    # The default scheme is 'http'.
-    # TODO
     if self.scheme:
       http_request.scheme = self.scheme
-    elif (self.scheme is None and http_request.scheme is None 
-        and self.port != 443):
-      http_request.scheme = 'http'
-    elif (self.scheme is None and http_request.scheme is None 
-        and self.port == 443):
-      http_request.scheme = 'https'
+    elif http_request.scheme is None:
+      if self.port == 443:
+        http_request.scheme = 'https'
+      else:  
+        # The default scheme is http.
+        http_request.scheme = 'http'
     if self.port:
       http_request.port = self.port
-    if not self.port and not http_request.port and (
-        self.scheme == 'http' or self.scheme is None):
-      http_request.port = 80
-    elif not self.port and not http_request.port and self.scheme == 'https':
-      http_request.port = 443
+    elif http_request.port is None:
+      if http_request.scheme == 'https':
+        http_request.port = 443
+      else:
+        http_request.port = 80
     if self.host:
       http_request.host = self.host
     # Set the relative uri path 
     if self.path:
-      http_request.uri = self.get_full_path()
+      http_request.uri = self.get_relative_path()
     elif not self.path and self.query:
-      http_request.uri = '/%s' % self.get_full_path()
+      http_request.uri = '/%s' % self.get_relative_path()
     elif not self.path and not self.query and not http_request.uri:
       http_request.uri = '/'
     return http_request
