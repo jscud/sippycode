@@ -79,7 +79,8 @@ class HttpRequest(object):
     Args:
       data: str or a file-like object containing a part of the request body.
       mime_type: str The MIME type describing the data
-      size: int Required if the data is a file like object, if 
+      size: int Required if the data is a file like object. If the data is a
+            string, the size is calculated so this parameter is ignored.
     """
     if isinstance(data, str):
       size = len(data)
@@ -212,19 +213,8 @@ class Uri(object):
     # Determine the correct scheme.
     if self.scheme:
       http_request.scheme = self.scheme
-    #elif http_request.scheme is None:
-    #  if self.port == 443:
-    #    http_request.scheme = 'https'
-    #  else:  
-        # The default scheme is http.
-    #    http_request.scheme = 'http'
     if self.port:
       http_request.port = self.port
-    #elif http_request.port is None:
-    #  if http_request.scheme == 'https':
-    #    http_request.port = 443
-    #  else:
-    #    http_request.port = 80
     if self.host:
       http_request.host = self.host
     # Set the relative uri path 
@@ -265,24 +255,6 @@ def parse_uri(uri_string):
       elif len(pair_parts) == 1:
         uri.query[urllib.unquote_plus(pair_parts[0])] = None
   return uri
-
-
-#class BodyPart(object):
-#  size = None
-#  
-#  def __init__(self, data, mime_type, size=None):
-#    self.data = data
-#    self.mime_type = mime_type
-#    if size is not None:
-#      self.size = size
-#  
-#  def _get_length(self):
-#    if isinstance(self.data, (str, unicode)):
-#      return len(self.data)
-#    elif self.size is not None:
-#      return self.size
-#    else:
-#      raise UnknownSize('Each part of the body must have a known size.')
 
 
 class HttpResponse(object):
@@ -365,23 +337,6 @@ class HttpClient(object):
             replacement_header_line)
       except ValueError:  # header_line missing from connection._buffer
         pass
-   
-#    if content_length:
-#      headers['Content-Length'] = str(content_length) 
-#    # If the list of headers does not include a Content-Length, attempt to
-#    # calculate it based on the data object.    
-#    if body_parts and 'Content-Length' not in headers:
-#      total_length = sum([part._get_length() for part in body_parts])
-#      headers['Content-Length'] = str(total_length)
-    
-#    # Set the content type if none was set.
-#    if 'Content-Type' not in headers:
-#      if len(body_parts) == 1:
-#        headers['Content-Type'] = body_parts[0].mime_type
-#      elif len(body_parts) > 1:
-#        headers['Content-Type'] = 'multipart/related; boundary="%s"' % (
-#            MIME_BOUNDARY,)
-#        headers['MIME-version'] = '1.0'
 
     # Send the HTTP headers.
     for header_name, value in headers.iteritems():
@@ -392,14 +347,6 @@ class HttpClient(object):
     if body_parts:
       for part in body_parts:
         _send_data_part(part)
-#      if len(body_parts) == 1:
-#        _send_data_part(body_parts.data)
-#      elif len(body_parts) > 1:
-#        connection.send('Media multipart posting\n')
-#        connection.send('--%s\n' % (MIME_BOUNDARY,))
-#        for part in body_parts:
-#          #TODO
-#          _send_data_part(part)
     
     # Return the HTTP Response from the server.
     return connection.getresponse()
