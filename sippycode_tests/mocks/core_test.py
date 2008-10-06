@@ -69,10 +69,8 @@ class EchoClientTest(unittest.TestCase):
 
     
 def suite():
-  suite = unittest.TestSuite()
-  suite.addTest(EchoClientTest('test_echo_response'))
-  return suite
+  return unittest.TestSuite((unittest.makeSuite(EchoClientTest,'test'),))
 
-  
+
 if __name__ == '__main__':
   unittest.main()

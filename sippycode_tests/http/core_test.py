@@ -28,9 +28,9 @@ class UriTest(unittest.TestCase):
     self.assert_(uri.path == '/test')
     self.assert_(uri.query == {'z':'bar', 'q':'foo'})
     
-  def test_stamp_no_request(self):
+  def test_modify_request_no_request(self):
     uri = core.parse_uri('http://www.google.com/test?q=foo&z=bar')
-    request = uri._stamp()
+    request = uri._modify_request()
     self.assert_(request.scheme == 'http')
     self.assert_(request.host == 'www.google.com')
     # If no port was provided, the HttpClient is responsible for determining
@@ -41,7 +41,7 @@ class UriTest(unittest.TestCase):
     self.assert_(request.headers == {})
     self.assert_(request._body_parts == [])
     
-  def test_stamp_http_with_set_port(self):
+  def test_modify_request_http_with_set_port(self):
     request = core.HttpRequest(port=8080, method='POST')
     request.add_body_part('hello', 'text/plain') 
     uri = core.parse_uri('//example.com/greet')
@@ -50,8 +50,7 @@ class UriTest(unittest.TestCase):
     self.assert_(uri.host == 'example.com')
     self.assert_(uri.port is None)
     
-    # TODO change the name of stamp to modify_request.
-    uri._stamp(request)
+    uri._modify_request(request)
     self.assert_(request.host == 'example.com')
     # If no scheme was provided, the URI will not add one, but the HttpClient
     # should assume the request is HTTP.
@@ -61,11 +60,11 @@ class UriTest(unittest.TestCase):
     self.assert_(request.method == 'POST')
     self.assert_(request.headers['Content-Type'] == 'text/plain')
     
-  def test_stamp_use_default_ssl_port(self):
+  def test_modify_request_use_default_ssl_port(self):
     request = core.HttpRequest(scheme='https', method='PUT')
     request.add_body_part('hello', 'text/plain')
     uri = core.parse_uri('/greet')
-    uri._stamp(request)
+    uri._modify_request(request)
     self.assert_(request.host is None)
     self.assert_(request.scheme == 'https')
     # If no port was provided, leave the port as None, it is up to the 
@@ -121,15 +120,8 @@ class HttpRequestTest(unittest.TestCase):
 
 
 def suite():
-  suite = unittest.TestSuite((unittest.makeSuite(UriTest,'test'),
-                              unittest.makeSuite(HttpRequestTest,'test')))
-  #suite.addTest(UriTest('test_parse_uri'))
-  #suite.addTest(UriTest('test_stamp_no_request'))
-  #suite.addTest(UriTest('test_stamp_http_with_set_port'))
-  #suite.addTest(UriTest('test_stamp_use_default_ssl_port'))
-  #suite.addTest(UriTest('test_to_string'))
-  #suite.addTest(HttpRequestTest('test_request_with_one_body_part'))
-  #suite.addTest(HttpRequestTest('test_add_file_without_size'))
+  return unittest.TestSuite((unittest.makeSuite(UriTest,'test'),
+                             unittest.makeSuite(HttpRequestTest,'test')))
   return suite
 
   

@@ -206,7 +206,7 @@ class Uri(object):
       return '%s://%s:%s%s' % (scheme, self.host, str(self.port), 
                                self._get_relative_path())
       
-  def _stamp(self, http_request=None):
+  def _modify_request(self, http_request=None):
     """Sets HTTP request components based on the URI."""
     if http_request is None:
       http_request = HttpRequest()
