@@ -122,8 +122,7 @@ class HttpRequestTest(unittest.TestCase):
 def suite():
   return unittest.TestSuite((unittest.makeSuite(UriTest,'test'),
                              unittest.makeSuite(HttpRequestTest,'test')))
-  return suite
 
-  
+ 
 if __name__ == '__main__':
   unittest.main()
