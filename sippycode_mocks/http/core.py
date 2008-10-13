@@ -31,13 +31,13 @@ class MockHttpClient(object):
 
   def add_response(self, http_request, status, reason, headers=None, 
       body=None):
-    # TODO left off here
     if body is not None:
       if hasattr(body, 'read'):
         copied_body = body.read()
       else:
         copied_body = body
     response = core.HttpResponse(status, reason, headers, copied_body)
+    # TODO Screub the request and the response.
     self._recordings.append((http_request._copy(), response))
   
   def request(self, http_request):

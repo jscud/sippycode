@@ -30,7 +30,7 @@ class UriTest(unittest.TestCase):
     
   def test_modify_request_no_request(self):
     uri = core.parse_uri('http://www.google.com/test?q=foo&z=bar')
-    request = uri._modify_request()
+    request = uri.modify_request()
     self.assert_(request.scheme == 'http')
     self.assert_(request.host == 'www.google.com')
     # If no port was provided, the HttpClient is responsible for determining
@@ -50,7 +50,7 @@ class UriTest(unittest.TestCase):
     self.assert_(uri.host == 'example.com')
     self.assert_(uri.port is None)
     
-    uri._modify_request(request)
+    uri.modify_request(request)
     self.assert_(request.host == 'example.com')
     # If no scheme was provided, the URI will not add one, but the HttpClient
     # should assume the request is HTTP.
@@ -64,7 +64,7 @@ class UriTest(unittest.TestCase):
     request = core.HttpRequest(scheme='https', method='PUT')
     request.add_body_part('hello', 'text/plain')
     uri = core.parse_uri('/greet')
-    uri._modify_request(request)
+    uri.modify_request(request)
     self.assert_(request.host is None)
     self.assert_(request.scheme == 'https')
     # If no port was provided, leave the port as None, it is up to the 

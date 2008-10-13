@@ -76,7 +76,7 @@ class MockHttpClientTest(unittest.TestCase):
 
   def test_respond_with_recording(self):
     request = core.HttpRequest(method='GET')
-    core.parse_uri('http://www.google.com/')._modify_request(request)
+    core.parse_uri('http://www.google.com/').modify_request(request)
     self.client.add_response(request, 200, 'OK', body='Testing')
     response = self.client.request(request)
     self.assert_(response.status == 200)
@@ -85,7 +85,7 @@ class MockHttpClientTest(unittest.TestCase):
 
   def test_save_and_load_recordings(self):
     request = core.HttpRequest(method='GET')
-    core.parse_uri('http://www.google.com/')._modify_request(request)
+    core.parse_uri('http://www.google.com/').modify_request(request)
     self.client.add_response(request, 200, 'OK', body='Testing')
     response = self.client.request(request)
     self.client._save_recordings('test_save_and_load_recordings')
@@ -100,7 +100,7 @@ class MockHttpClientTest(unittest.TestCase):
 
   def test_use_recordings(self):
     request = core.HttpRequest(method='GET')
-    core.parse_uri('http://www.google.com/')._modify_request(request)
+    core.parse_uri('http://www.google.com/').modify_request(request)
     self.client._load_or_use_client('test_use_recordings', core.HttpClient())
     response = self.client.request(request)
     if self.client.real_client:
