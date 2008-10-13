@@ -75,7 +75,6 @@ class UriTest(unittest.TestCase):
     self.assert_(request.headers['Content-Type'] == 'text/plain')
     self.assert_(len(request._body_parts) == 1)
     self.assert_(request._body_parts[0] == 'hello')
-    
 
   def test_to_string(self):
     uri = core.Uri(host='www.google.com', query={'q':'sippycode'})
@@ -88,14 +87,13 @@ class HttpRequestTest(unittest.TestCase):
   def test_request_with_one_body_part(self):
     request = core.HttpRequest()
     self.assert_(len(request._body_parts) == 0)
-    self.assert_(request._content_length == 0)
+    self.assert_('Content-Length' not in request.headers)
     self.assert_(not 'Content-Type' in request.headers)
     self.assert_(not 'Content-Length' in request.headers)
     request.add_body_part('this is a test', 'text/plain')
     self.assert_(len(request._body_parts) == 1)
     self.assert_(request.headers['Content-Type'] == 'text/plain')
     self.assert_(request._body_parts[0] == 'this is a test')
-    self.assert_(request._content_length == len('this is a test'))
     self.assert_(request.headers['Content-Length'] == str(len(
         'this is a test')))
     
@@ -111,12 +109,25 @@ class HttpRequestTest(unittest.TestCase):
     self.assert_(len(request._body_parts) == 1)
     self.assert_(request.headers['Content-Type'] == 'text/plain')
     self.assert_(request._body_parts[0].read() == 'this is a test')
-    self.assert_(request._content_length == len('this is a test'))
     self.assert_(request.headers['Content-Length'] == str(len(
         'this is a test')))
 
-  def test_multipart_body(self):
-    pass
+  def test_copy(self):
+    request = core.HttpRequest(scheme='https', host='www.google.com', 
+        method='POST', headers={'test':'1', 'ok':'yes'})
+    request.add_body_part('body1', 'text/plain')
+    request.add_body_part('<html>body2</html>', 'text/html')
+    copied = request._copy()
+    self.assert_(request.scheme == copied.scheme)
+    self.assert_(request.host == copied.host)
+    self.assert_(request.method == copied.method)
+    self.assert_(request.uri == copied.uri)
+    self.assert_(request.headers == copied.headers)
+    self.assert_(request._body_parts == copied._body_parts)
+    copied.headers['test'] = '2'
+    copied._body_parts[1] = '<html>body3</html>'
+    self.assert_(request.headers != copied.headers)
+    self.assert_(request._body_parts != copied._body_parts)
 
 
 def suite():

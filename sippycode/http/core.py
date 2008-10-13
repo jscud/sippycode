@@ -1,4 +1,4 @@
-#   Copyright 2008 Jeffrey William Scudder
+#    Copyright 2008 Jeffrey William Scudder
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
 #   you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 import StringIO
 import urlparse
 import urllib
+import httplib
 
 
 class Error(Exception):
@@ -41,7 +42,6 @@ class HttpRequest(object):
   port = None
   method = None
   uri = None
-  _content_length = 0
   
   def __init__(self, scheme=None, host=None, port=None, method=None, uri=None, 
       headers=None):
@@ -86,29 +86,33 @@ class HttpRequest(object):
       size = len(data)
     if size is None:
       raise UnknownSize('Each part of the body must have a known size.')
+    if 'Content-Length' in self.headers:
+      content_length = int(self.headers['Content-Length'])
+    else: 
+      content_length = 0
     # If this is the first part added to the body, then this is not a multipart
     # request.
     if len(self._body_parts) == 0:
       self.headers['Content-Type'] = mime_type
-      self._content_length = size
+      content_length = size
       self._body_parts.append(data)
     elif len(self._body_parts) == 1:
       # This is the first member in a mime-multipart request, so change the
       # _body_parts list to indicate a multipart payload.
       self._body_parts.insert(0, 'Media multipart posting')
-      self._content_length += len('Media multipart posting')
       boundary_string = '\r\n--%s\r\n' % (MIME_BOUNDARY,)
+      content_length += len(boundary_string) + size
       self._body_parts.insert(1, boundary_string)
-      self._content_length += len(boundary_string) + size
+      content_length += len('Media multipart posting')
       # Put the content type of the first part of the body into the multipart
       # payload.
       original_type_string = 'Content-Type: %s\r\n\r\n' % (
           self.headers['Content-Type'],)
       self._body_parts.insert(2, original_type_string)
-      self._content_length += len(original_type_string)
+      content_length += len(original_type_string)
       boundary_string = '\r\n--%s\r\n' % (MIME_BOUNDARY,)
       self._body_parts.append(boundary_string)
-      self._content_length += len(boundary_string)
+      content_length += len(boundary_string)
       # Change the headers to indicate this is now a mime multipart request.
       self.headers['Content-Type'] = 'multipart/related; boundary="%s"' % (
           MIME_BOUNDARY,)
@@ -116,24 +120,35 @@ class HttpRequest(object):
       # Include the mime type of this part.
       type_string = 'Content-Type: %s\r\n\r\n' % (mime_type)
       self._body_parts.append(type_string)
-      self._content_length += len(type_string)
+      content_length += len(type_string)
       self._body_parts.append(data)
       ending_boundary_string = '\r\n--%s--' % (MIME_BOUNDARY,)
       self._body_parts.append(ending_boundary_string)
-      self._content_length += len(ending_boundary_string)
+      content_length += len(ending_boundary_string)
     else:
       # This is a mime multipart request.
       boundary_string = '\r\n--%s\r\n' % (MIME_BOUNDARY,)
       self._body_parts.insert(-1, boundary_string)
-      self._content_length += len(boundary_string) + size
+      content_length += len(boundary_string) + size
       # Include the mime type of this part.
       type_string = 'Content-Type: %s\r\n\r\n' % (mime_type)
       self._body_parts.insert(-1, type_string)
-      self._content_length += len(type_string)
+      content_length += len(type_string)
       self._body_parts.insert(-1, data)
-    self.headers['Content-Length'] = str(self._content_length)
+    self.headers['Content-Length'] = str(content_length)
   # I could add an "append_to_body_part" method as well.
 
+  def add_form_inputs(self, form_data, 
+                      mime_type='application/x-www-form-urlencoded'):
+    body = urllib.urlencode(form_data)
+    self.add_body_part(body, mime_type)
+
+  def _copy(self):
+    new_request = HttpRequest(scheme=self.scheme, host=self.host, 
+        port=self.port, method=self.method, uri=self.uri,
+        headers=self.headers.copy())
+    new_request._body_parts = self._body_parts[:]
+    return new_request
 
 def _apply_defaults(http_request):
   if http_request.scheme is None:
@@ -286,13 +301,11 @@ class HttpResponse(object):
     else:
       return self._body.read(amt)
 
-      
-
 
 class HttpClient(object):
   debug = None
   
-  def request(http_request):
+  def request(self, http_request):
     return self._http_request(http_request.host, http_request.method, 
         http_request.uri, http_request.scheme, http_request.port, 
         http_request.headers, http_request._body_parts)
@@ -315,8 +328,6 @@ class HttpClient(object):
       else:
         connection = httplib.HTTPConnection(host, int(port))
     
-    connection = self._prepare_connection(url, all_headers)
-
     if self.debug:
       connection.debuglevel = 1
 
@@ -327,11 +338,11 @@ class HttpClient(object):
     # HTTP request header 'Host: www.google.com:443' instead of
     # 'Host: www.google.com', and thus resulting the error message
     # 'Token invalid - AuthSub token has wrong scope' in the HTTP response.
-    if (url.protocol == 'https' and int(url.port or 443) == 443 and
+    if (scheme == 'https' and int(port or 443) == 443 and
         hasattr(connection, '_buffer') and
         isinstance(connection._buffer, list)):
-      header_line = 'Host: %s:443' % url.host
-      replacement_header_line = 'Host: %s' % url.host
+      header_line = 'Host: %s:443' % host
+      replacement_header_line = 'Host: %s' % host
       try:
         connection._buffer[connection._buffer.index(header_line)] = (
             replacement_header_line)

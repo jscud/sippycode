@@ -14,8 +14,10 @@
 
 import unittest
 import StringIO
+import os.path
 from sippycode_mocks.http import core as mock_core
 from sippycode.http import core
+from sippycode_tests import config
 
 class EchoClientTest(unittest.TestCase):
   
@@ -67,9 +69,52 @@ class EchoClientTest(unittest.TestCase):
     self.assert_(response.getheader('Content-Length') == str(
         len(expected_body)))
 
+class MockHttpClientTest(unittest.TestCase):
+
+  def setUp(self):
+    self.client = mock_core.MockHttpClient()
+
+  def test_respond_with_recording(self):
+    request = core.HttpRequest(method='GET')
+    core.parse_uri('http://www.google.com/')._modify_request(request)
+    self.client.add_response(request, 200, 'OK', body='Testing')
+    response = self.client.request(request)
+    self.assert_(response.status == 200)
+    self.assert_(response.reason == 'OK')
+    self.assert_(response.read() == 'Testing')
+
+  def test_save_and_load_recordings(self):
+    request = core.HttpRequest(method='GET')
+    core.parse_uri('http://www.google.com/')._modify_request(request)
+    self.client.add_response(request, 200, 'OK', body='Testing')
+    response = self.client.request(request)
+    self.client._save_recordings('test_save_and_load_recordings')
+    self.client._recordings = []
+    response = self.client.request(request)
+    self.assert_(response is None)
+    self.client._load_recordings('test_save_and_load_recordings')
+    response = self.client.request(request)
+    self.assert_(response.status == 200)
+    self.assert_(response.reason == 'OK')
+    self.assert_(response.read() == 'Testing')
+
+  def test_use_recordings(self):
+    request = core.HttpRequest(method='GET')
+    core.parse_uri('http://www.google.com/')._modify_request(request)
+    self.client._load_or_use_client('test_use_recordings', core.HttpClient())
+    response = self.client.request(request)
+    if self.client.real_client:
+      self.client._save_recordings('test_use_recordings')
+    self.assert_(response.status == 200)
+    self.assert_(response.reason == 'OK')
+    self.assert_(response.getheader('server') == 'gws')
+    body = response.read()
+    self.assert_(body.startswith('<html><head>'))
+
     
 def suite():
-  return unittest.TestSuite((unittest.makeSuite(EchoClientTest,'test'),))
+  return unittest.TestSuite((unittest.makeSuite(EchoClientTest, 'test'),
+                             unittest.makeSuite(MockHttpClientTest, 'test')))
 
 
 if __name__ == '__main__':
