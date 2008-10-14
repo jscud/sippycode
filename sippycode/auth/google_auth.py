@@ -12,6 +12,11 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
+
+class TokenNotFound(Exception):
+  pass
+
+
 class ClientLoginRequest(object):
   account_type = 'HOSTED_OR_GOOGLE'
   email = None
@@ -63,3 +68,42 @@ class ClientLoginToken(object):
 
   def modify_request(http_request):
     self.heaaders['Authorization'] = 'GoogleLogin auth=%s' % (self.token_string,)
+
+
+class CaptchaChallenge(object):
+
+  def __init__(self, captcha_url=None, captcha_token=None):
+    self.captcha_url = captcha_url
+    self.captcha_token = captcha_token
+
+
+def process_client_login_response(http_status, http_body, 
+    captcha_base_url='http://www.google.com/accounts/'):
+  """Extracts a ClientLoginToken or CaptchaChallenge.
+
+  Args:
+    http_status: int
+    http_body: str
+    captcha_base_url: str (optional)
+  """
+  if http_status == 200:
+    for response_line in http_body.splitlines():
+      if response_line.startswith('Auth='):
+        # Strip off the leading Auth= and return a ClientLogin token.
+        return ClientLoginToken(response_line[5:])
+  elif http_status == 403:
+    challenge = CaptchaChallenge()
+    contains_captcha_challenge = False
+    for response_line in http_body.splitlines():
+      if response_line.startswith('Error=CaptchaRequired'):
+        contains_captcha_challenge = True
+      elif response_line.startswith('CaptchaToken='):
+        # Strip off the leading CaptchaToken=
+        challenge.captcha_token = response_line[13:]
+      elif response_line.startswith('CaptchaUrl='):
+        challenge.captcha_url = '%s%s' % (captcha_base_url,
+            response_line[11:])
+    if contains_captcha_challenge:
+      return challenge
+  raise TokenNotFound('The server\'s response did not contain'
+      ' a token or a CAPTCHA challenge.')
