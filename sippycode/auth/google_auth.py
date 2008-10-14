@@ -18,12 +18,12 @@ class ClientLoginRequest(object):
   password = None
   service = None
   source = None
-  login_token = None
-  login_captcha = None
+  captcha_token = None
+  captcha_response = None
 
   def __init__(self, account_type=None, email=None, password=None, 
-      service=None, source=None, login_token=None, 
-      login_captcha=None):
+      service=None, source=None, captcha_token=None, 
+      captcha_response=None):
     if account_type is not None:
       self.account_type = account_type
     if email is not None:
@@ -32,16 +32,34 @@ class ClientLoginRequest(object):
       self.password = password
     if source is not None:
       self.source = source
-    if login_token is not None:
-      self.login_token = login_token
-    if login_captcha is not None:
-      self.login_captcha = login_captcha
+    if captcha_token is not None:
+      self.captcha_token = captcha_token
+    if captcha_response is not None:
+      self.captcha_response = captcha_response
 
   def modify_request(http_request):
-    pass
+    # Construct the login form post.
+    request_body = {'accountType': self.account_type, 'Email': self.email, 
+        'Passwd': self.password, 'service': self.service, 
+        'source': self.source}
+    if self.login_token:
+      request_body['logintoken'] = self.captcha_token
+      request_body['logincaptcha'] = self.captcha_response
+    # Modify the request to do a POST to 
+    # https://www.google.com/accounts/ClientLogin by default.
+    http_request.scheme = 'https'
+    if not http_request.host:
+      http_request.host = 'www.google.com'
+    http_request.method = 'POST'
+    if not http_request.uri:
+      http_request.uri = '/accounts/ClientLogin'
+    http_request.add_form_inputs(request_body)
 
 
-class ClientLooginToken(object):
+class ClientLoginToken(object):
 
   def __init__(self, token_string):
-    pass
+    self.token_string = token_string
+
+  def modify_request(http_request):
+    self.heaaders['Authorization'] = 'GoogleLogin auth=%s' % (self.token_string,)
