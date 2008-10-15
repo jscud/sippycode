@@ -77,7 +77,8 @@ class CaptchaChallenge(object):
     self.captcha_token = captcha_token
 
 
-def process_client_login_response(http_status, http_body):
+def process_client_login_response(http_status, http_body, 
+    base_url='http://www.google.com/accounts/'):
   """Extracts a ClientLoginToken or CaptchaChallenge.
 
   Args:
@@ -93,19 +94,16 @@ def process_client_login_response(http_status, http_body):
   elif http_status == 403:
     challenge = CaptchaChallenge()
     parameter = None
-    base_url = None
     contains_challenge = False
     for response_line in http_body.splitlines():
       if response_line.startswith('Error=CaptchaRequired'):
         contains_challenge = True
-      elif response_line.startswith('Url='):
-        base_url = response_line[4:]
       elif response_line.startswith('CaptchaToken='):
         # Strip off the leading CaptchaToken=
         challenge.captcha_token = response_line[13:]
       elif response_line.startswith('CaptchaUrl='):
         parameter = response_line[11:]
-    if contains_captcha_challenge:
+    if contains_challenge:
       challenge.captcha_url = '%s%s' % (base_url, parameter)
       return challenge
   raise TokenNotFound('The server\'s response did not contain'

@@ -30,7 +30,7 @@ The collection includes a library for making HTTP requests.
     packages=['sippycode', 'sippycode.http', 'sippycode.auth',
               'sippycode_mocks', 'sippycode_mocks.http',
               'sippycode_tests', 'sippycode_tests.mocks',
-              'sippycode_tests.http'],
+              'sippycode_tests.http', 'sippycode_tests.auth'],
     package_dir = {'sippycode':'sippycode', 
                    'sippycode_mocks':'sippycode_mocks',
                    'sippycode_tests':'sippycode_tests'}
