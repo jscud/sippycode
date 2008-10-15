@@ -27,7 +27,7 @@ The collection includes a library for making HTTP requests.
     author_email='me@jeffscudder.com',
     license='Apache 2.0',
     url='http://code.google.com/p/sippycode',
-    packages=['sippycode', 'sippycode.http', 
+    packages=['sippycode', 'sippycode.http', 'sippycode.auth',
               'sippycode_mocks', 'sippycode_mocks.http',
               'sippycode_tests', 'sippycode_tests.mocks',
               'sippycode_tests.http'],

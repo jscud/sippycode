@@ -42,12 +42,12 @@ class ClientLoginRequest(object):
     if captcha_response is not None:
       self.captcha_response = captcha_response
 
-  def modify_request(http_request):
+  def modify_request(self, http_request):
     # Construct the login form post.
     request_body = {'accountType': self.account_type, 'Email': self.email, 
         'Passwd': self.password, 'service': self.service, 
         'source': self.source}
-    if self.login_token:
+    if self.captcha_token:
       request_body['logintoken'] = self.captcha_token
       request_body['logincaptcha'] = self.captcha_response
     # Modify the request to do a POST to 
@@ -77,8 +77,7 @@ class CaptchaChallenge(object):
     self.captcha_token = captcha_token
 
 
-def process_client_login_response(http_status, http_body, 
-    captcha_base_url='http://www.google.com/accounts/'):
+def process_client_login_response(http_status, http_body):
   """Extracts a ClientLoginToken or CaptchaChallenge.
 
   Args:
@@ -93,17 +92,21 @@ def process_client_login_response(http_status, http_body,
         return ClientLoginToken(response_line[5:])
   elif http_status == 403:
     challenge = CaptchaChallenge()
-    contains_captcha_challenge = False
+    parameter = None
+    base_url = None
+    contains_challenge = False
     for response_line in http_body.splitlines():
       if response_line.startswith('Error=CaptchaRequired'):
-        contains_captcha_challenge = True
+        contains_challenge = True
+      elif response_line.startswith('Url='):
+        base_url = response_line[4:]
       elif response_line.startswith('CaptchaToken='):
         # Strip off the leading CaptchaToken=
         challenge.captcha_token = response_line[13:]
       elif response_line.startswith('CaptchaUrl='):
-        challenge.captcha_url = '%s%s' % (captcha_base_url,
-            response_line[11:])
+        parameter = response_line[11:]
     if contains_captcha_challenge:
+      challenge.captcha_url = '%s%s' % (base_url, parameter)
       return challenge
   raise TokenNotFound('The server\'s response did not contain'
       ' a token or a CAPTCHA challenge.')
