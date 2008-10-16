@@ -357,7 +357,7 @@ class HttpClient(object):
     # If there is data, send it in the request.
     if body_parts:
       for part in body_parts:
-        _send_data_part(part)
+        _send_data_part(part, connection)
     
     # Return the HTTP Response from the server.
     return connection.getresponse()
