@@ -1,5 +1,8 @@
 #!/bin/bash
 
+mkdir -p sippy_twitter/sippycode/twitter/
+mkdir -p sippy_twitter/sippycode/auth/
+mkdir -p sippy_twitter/sippycode/http/
 cp ../sippycode/twitter/sippy_twitter.py sippy_twitter/
 cp ../sippycode/twitter/__init__.py sippy_twitter/sippycode/twitter/__init__.py
 cp ../sippycode/twitter/core.py sippy_twitter/sippycode/twitter/core.py
