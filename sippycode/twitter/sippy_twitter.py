@@ -15,16 +15,60 @@
 
 import os.path
 import getpass
-from xml.etree import ElementTree
+try:
+  from xml.etree import ElementTree
+except ImportError:
+  from elementtree import ElementTree
 import sippycode.twitter.core as twitter
 import sippycode.auth.core as auth
 
 
+class StatusClient(object):
+  _twitter_page = 0
+  _local_page = 0
+  
+  def __init__(self):
+    self._status_cache = []
+
+  def print_current_page(self):
+    start_index = self._local_page * 5
+    for result in self._status_cache[start_index:start_index+5]:
+      print result[0]
+      print result[1]
+      print ''
+
+  def get_page(self, number, client):
+    old_twitter_page = self._twitter_page
+    if number > 0:
+      self._twitter_page = (number / 4) + 1
+      self._local_page = (number - 1) % 4
+    else:
+      self._twitter_page = 1
+      self._local_page = 0
+    if old_twitter_page != self._twitter_page:
+      response = client.friends_timeline(page=self._twitter_page)
+      if response.status == 200:
+        self._status_cache = []
+        tree = ElementTree.fromstring(response.read())
+        for status in tree.findall('status'):
+          self._status_cache.append(
+              ('%s - %s - %s' % (
+                  status.findtext('user/screen_name'), 
+                  status.findtext('user/name'), 
+                  status.findtext('created_at')), 
+              status.findtext('text')))
+      else: 
+        print 'Sorry, we couldn\'t read the updates from your friends.'
+
+
 def main():
   command = ''
+  # The pages start at 1, so we begin at zero so that the first page will
+  # be fetched.
   current_page = 0
   print 'Welcome to the sippycode Twitter client.'
   client = get_credentialed_client()
+  status_viewer = StatusClient()
   print_instructions()
 
   while not command.startswith('q'):
@@ -41,13 +85,16 @@ def main():
     elif command.startswith('n'):
       if current_page > 0:
         current_page -= 1
-      show_page(client, current_page)
+      status_viewer.get_page(current_page, client)
+      status_viewer.print_current_page()
     elif command.startswith('p'):
       current_page = int(raw_input('Start at page: '))
-      show_page(client, current_page)
+      status_viewer.get_page(current_page, client)
+      status_viewer.print_current_page()
     else:
       current_page += 1
-      show_page(client, current_page)
+      status_viewer.get_page(current_page, client)
+      status_viewer.print_current_page()
 
   
 def print_instructions():
@@ -82,25 +129,6 @@ def get_credentialed_client():
     credential_file.close()
   return client
 
-
-def show_page(client, page_number):
-  response = client.friends_timeline(page=page_number)
-  if response.status == 200:
-    render_statuses(response.read())
-  else:
-    print 'Sorry, we couldn\'t read the updates from your friends.'
-
-
-def render_statuses(xml_string):
-  tree = ElementTree.fromstring(xml_string)
-  for status in tree.findall('status'):
-    print '%s - %s - %s' % (
-        status.findtext('user/screen_name'),
-        status.findtext('user/name'),
-        status.findtext('created_at'))
-    print status.findtext('text')
-    print ''
-   
 
 if __name__ == '__main__':
   main()
