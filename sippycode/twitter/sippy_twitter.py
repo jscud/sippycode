@@ -31,6 +31,7 @@ class StatusClient(object):
     self._status_cache = []
 
   def print_current_page(self):
+    print '------------------------------'
     start_index = self._local_page * 5
     for result in self._status_cache[start_index:start_index+5]:
       print result[0]
