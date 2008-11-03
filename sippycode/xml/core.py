@@ -33,17 +33,129 @@ class XmlElement(object):
 
   _other_elements = None
   _other_attributes = None
-  
+
   def element(cls, name, member_class, repeating=False):
-    pass
-  element = classmethod(member)
+    if cls._expected_elements is None:
+      cls._expected_elements = {}
+    cls._expected_elements['{%s}%s' % (
+        member_class._namespace, member_class._tag)] = (
+            name, member_class, repeating)
+    return cls
   
-  def attribute(cls, name, tag, namespace):
-    pass
+  element = classmethod(element)
+  
+  def attribute(cls, name, tag, namespace=None):
+    if cls._expected_attributes is None:
+      cls._expected_attributes = {}
+    cls._expected_attributes['{%s}%s' % (
+        namespace, tag)] = name
+    return cls
+
   attribute = classmethod(attribute)
 
-  
-  
+  def get_elements(self, tag=None, namespace=None, version=1):
+    """TODO
+
+    Args:
+      version: Ignored. This is used in VersionedElements.
+    """
+    matches = []
+    return matches
+
+  def get_attribute(self, tag=None, namespace=None, version=1):
+    pass
+
+  def _from_tree(self, tree, version=1):
+    pass
+
+  def _to_tree(self, tree, version=1):
+    pass
+
+  def _become_child(self, tree, version=1):
+    pass
+
+
+def _get_namespace(tree_member_string):
+  """Extracts the namespace from an ElementTree style name.
+
+  For example '{http://example.com/xml}foo' would return 
+  'http://example.com/xml' and 'bar' would return None.
+  """
+  if tree_member_string.startswith('{'):
+    return tree_member_string[1:tree_member_string.index('}')]
+  return None
+
+
+def _get_tag(tree_member_string):
+  """Extracts the tag from an ElementTree style name.
+
+  For example '{http://example.com/xml}foo' would return 'foo' and 'bar' would
+  return 'bar'
+  """
+  if tree_member_string.startswith('{'):
+    return tree_member_string[tree_member_string.index('}') + 1:]
+  return tree_member_string
+
+
+class VersionedElement(XmlElement):
+
+  def element(cls, name, member_class, repeating=False, version=1):
+    if cls._expected_elements is None:
+      cls._expected_elements = [{}]
+    # Make sure there is a version slot available in the list of versioned
+    # attribute mappings.
+    if len(cls._expected_elements) < version:
+      while len(cls._expected_elements) < version:
+        cls._expected_elements.append({})
+    cls._expected_elements[version-1]['{%s}%s' % (
+        member_class._namespace, member_class._tag)] = (
+            name, member_class, repeating)
+    return cls
+
+  element = classmethod(element)
+
+  def attribute(cls, name, tag, namespace=None, version=1):
+    if cls._expected_attributes is None:
+      cls._expected_attributes = [{}]
+    # Make sure there is a version slot available in the list of versioned
+    # attribute mappings.
+    if len(cls._expected_attributes) < version:
+      while len(cls._expected_attributes) < version:
+        cls._expected_attributes.append({})
+    cls._expected_attributes[version-1]['{%s}%s' % (
+        namespace, tag)] = name
+    return cls
+
+    attribute = classmethod(attribute)
+
+  def get_elements(self, tag=None, namespace=None, version=1):
+    """TODO
+
+    Args:
+      version: Ignored. This is used in VersionedElements.
+    """
+    matches = []
+    return matches
+
+  def get_attribute(self, tag=None, namespace=None, version=1):
+    pass
+
+  def _from_tree(self, tree, version=1):
+    pass
+
+  def _to_tree(self, tree, version=1):
+    pass
+
+  def _become_child(self, tree, version=1):
+    pass
+
+
+class XmlAttribute(object):
+
+  def __init__(self, value, tag, namespace=None):
+    self.value = value
+    self._tag = tag
+    self._namespace = namespace
 
 # Example:
 #
