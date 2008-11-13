@@ -28,10 +28,11 @@ The collection includes a library for making HTTP requests.
     license='Apache 2.0',
     url='http://code.google.com/p/sippycode',
     packages=['sippycode', 'sippycode.http', 'sippycode.auth',
-              'sippycode.twitter',
+              'sippycode.twitter', 'sippycode.xml',
               'sippycode_mocks', 'sippycode_mocks.http',
               'sippycode_tests', 'sippycode_tests.mocks',
-              'sippycode_tests.http', 'sippycode_tests.auth'],
+              'sippycode_tests.http', 'sippycode_tests.auth',
+              'sippycode_tests.xml_tests'],
     package_dir = {'sippycode':'sippycode', 
                    'sippycode_mocks':'sippycode_mocks',
                    'sippycode_tests':'sippycode_tests'}
