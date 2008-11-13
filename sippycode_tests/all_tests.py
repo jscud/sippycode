@@ -17,11 +17,13 @@ import sippycode_tests.mocks.core_test
 import sippycode_tests.http.core_test
 import sippycode_tests.auth.core_test
 import sippycode_tests.auth.google_auth_test
+import sippycode_tests.xml_tests.core_test
 
 def suite():
   return unittest.TestSuite((sippycode_tests.mocks.core_test.suite(), 
                              sippycode_tests.http.core_test.suite(),
                              sippycode_tests.auth.core_test.suite(),
+                             sippycode_tests.xml_tests.core_test.suite(),
                              sippycode_tests.auth.google_auth_test.suite()))
                              
 if __name__ == '__main__':
