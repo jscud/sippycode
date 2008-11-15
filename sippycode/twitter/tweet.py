@@ -40,13 +40,14 @@ if __name__ == '__main__':
   client = get_credentialed_client()
   if client:
     message = ' '.join(sys.argv[1:])
-    print 'Tweeting: %s' % message
-    choice = raw_input('Tweet this as %s? (y): ' % base64.decodestring(
-        client._credentials.basic_cookie).split(':')[0])
-    if choice.startswith('n') or choice.startswith('N'):
-      print 'nevermind'
-    else:
-      client.update(message)
-      print 'posted'
+    if message:
+      print 'Tweeting: %s' % message
+      choice = raw_input('Tweet this as %s? (y): ' % base64.decodestring(
+          client._credentials.basic_cookie).split(':')[0])
+      if choice.startswith('n') or choice.startswith('N'):
+        print 'nevermind'
+      else:
+        client.update(message)
+        print 'posted'
   else:
     print 'No credentials found, run login.py'
