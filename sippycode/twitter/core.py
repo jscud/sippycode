@@ -25,7 +25,7 @@ class TwitterClient(object):
     request = http_core.HttpRequest(method='POST')
     http_core.parse_uri(
         'http://twitter.com/statuses/update.xml').modify_request(request)
-    request.add_form_inputs({'status': message})
+    request.add_form_inputs({'status': message, 'source':'sippycode'})
     self._credentials.modify_request(request)
     client = http_core.HttpClient()
     response = client.request(request)
