@@ -14,4 +14,4 @@ cp ../sippycode/auth/__init__.py sippy_twitter/sippycode/auth/__init__.py
 cp ../sippycode/auth/core.py sippy_twitter/sippycode/auth/core.py
 cp ../sippycode/http/__init__.py sippy_twitter/sippycode/http/__init__.py
 cp ../sippycode/http/core.py sippy_twitter/sippycode/http/core.py
-zip -r sippy_twitter-0.1.zip sippy_twitter
+zip -r sippy_twitter-0.2.zip sippy_twitter
