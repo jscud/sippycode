@@ -27,4 +27,4 @@ Recommended improvements:
 To run this yourself, you'll need to sign up for Google App Engine, then
 change the app ID in app.yaml, then upload. You will probably also need to 
 sign up for the Calais and Yahoo Search BOSS APIs and replace my API keys
-in the code with your own API keys.
+in the code (article.py) with your own API keys.
