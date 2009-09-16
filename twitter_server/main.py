@@ -59,9 +59,13 @@ class MainPage(webapp.RequestHandler):
       self.redirect('/set_credentials')
     self.response.out.write(
        '<html>'
-         '<head><script src="/api.js"></script></head>'
+         '<head>'
+           '<script src="/api.js"></script>'
+           '<script src="http://www.json.org/json2.js"></script>'
+         '</head>'
          '<body onload="start()"><div style="float: right;">'
            '<a href="%s">Sign Out</a></div><div id="container">:-)</div>'
+           '<div id="debug"></div>'
          '</body>'
        '</html>' % (users.create_logout_url('/')))
 
@@ -87,7 +91,12 @@ class Api(webapp.RequestHandler):
           headers={'Authorization': 'Basic %s' % (credentials,)})
       self.response.out.write(response.content)
     elif action == 'read':
-      url = 'http://twitter.com/statuses/friends_timeline.json' 
+      if 'after' in self.request.headers:
+        url = 'http://twitter.com/statuses/friends_timeline.json?since_id=%s' % self.request.headers['after']
+      elif 'before' in self.request.headers:
+        url = 'http://twitter.com/statuses/friends_timeline.json?max_id=%s' % self.request.headers['before']
+      else:
+        url = 'http://twitter.com/statuses/friends_timeline.json' 
       response = urlfetch.fetch(
           url, headers={'Authorization': 'Basic %s' % (credentials,)})
       self.response.out.write(response.content)

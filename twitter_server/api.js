@@ -323,12 +323,15 @@ function start() {
       '<input id="tweet" size="140"></input>'
       + '<button value="Tweet" onclick="tweet()">Tweet</button>'
       + '<div id="last-tweet"></div>'
-      + '<button value="Read" onclick="fetch()">Read</button>'
-      + '<div id="feed"></div>');
+      + '<button value="Newer" onclick="fetchNewer()">Newer</button>'
+      + '<div id="feed"></div>'
+      + '<button value="Older" onclick="fetchOlder()">Older</button>'
+      );
 }
 
 function tweetResponseHandler(http) {
-  q12.setText(q12.gid('last-tweet'), 'Your last tweet: ' + http.responseText);
+  var response = JSON.parse(http.responseText);
+  q12.setText(q12.gid('last-tweet'), 'Your last tweet: ' + response.text);
 }
 
 function tweet() {
@@ -339,6 +342,77 @@ function fetch() {
   q12.post('', '/api', {'action': 'read'}, readResponseHandler);
 }
 
+function fetchNewer() {
+  if (newestUpdate == null) {
+    fetch();
+  } else {
+    q12.post('', '/api', {'action': 'read', 'after': newestUpdate}, readResponseHandler);
+  }
+}
+
+function fetchOlder() {
+  if (oldestUpdate == null) {
+    fetch();
+  } else {
+    q12.post('', '/api', {'action': 'read', 'before': oldestUpdate}, readResponseHandler);
+  }
+}
+
+var oldestUpdate = null;
+var newestUpdate = null;
+
 function readResponseHandler(http) {
-  q12.setText(q12.gid('feed'), http.responseText);
+  var updates = JSON.parse(http.responseText);
+  if (updates.length == 0) {
+    return;
+  }
+  var profileImg = null;
+  var updateContainer = null;
+  var username = null;
+  var prepend = false;
+  // Set the oldest and newest if applicable.
+  if (oldestUpdate == null || oldestUpdate >  updates[updates.length-1].id) {
+    oldestUpdate = updates[updates.length-1].id;
+  }
+  if (newestUpdate == null || newestUpdate < updates[0].id) {
+    newestUpdate = updates[0].id;
+    prepend = true;
+  }
+
+  if (prepend) {
+    for (var i = updates.length-1; i >= 0; i--) {
+      // Check to see if the message already is on the page.
+      if (q12.gid('t' + updates[i].id) == null) {
+        // If the message is not present, render it.
+        var feedNode = q12.gid('feed');
+        feedNode.insertBefore(buildUpdateNode(updates[i]), feedNode.firstChild);
+      }
+    }
+  } else { 
+    // Render the messages.
+    for (var i = 0; i < updates.length; i++) {
+      // Check to see if the message already is on the page.
+      if (q12.gid('t' + updates[i].id) == null) {
+        // If the message is not present, render it.
+        q12.gid('feed').appendChild(buildUpdateNode(updates[i]));
+      }
+    }
+  }
+  //q12.setText(q12.gid('feed'), http.responseText);
+}
+
+function buildUpdateNode(update) {
+  var profileImg = q12.c('img');
+  profileImg.src = update.user.profile_image_url;
+  var username = q12.c('a');
+  username.href = 'http://twitter.com/' + update.user.screen_name;
+  username.appendChild(q12.t(update.user.screen_name));
+  var updateContainer = q12.c('div');
+  updateContainer['id'] = 't' + update.id;
+  updateContainer.appendChild(profileImg);
+  updateContainer.appendChild(q12.t(' '));    
+  updateContainer.appendChild(username);
+  updateContainer.appendChild(q12.t(': '));    
+  updateContainer.appendChild(q12.t(update.text));
+  return updateContainer;
 }
