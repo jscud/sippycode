@@ -6,15 +6,12 @@ api_version: 1
 handlers:
 - url: /api.js
   secure: always
-  login: required
   static_files: api.js
   upload: api.js
 
 - url: /.*
-  login: required
   secure: always
   script: main.py
+  login: required
 
-- url: /unused
-  script: twitter_oauth_handler.py
 

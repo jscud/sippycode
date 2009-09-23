@@ -317,6 +317,7 @@ q12.fromUrl = function(input) {
   return unescape(input);
 };
 
+/* Entry point for our application. */
 function start() {
   q12.setHtml(
       q12.gid('container'),
@@ -404,6 +405,7 @@ function readResponseHandler(http) {
 function buildUpdateNode(update) {
   var profileImg = q12.c('img');
   profileImg.src = update.user.profile_image_url;
+  profileImg.setAttribute('class', 'user');
   var username = q12.c('a');
   username.href = 'http://twitter.com/' + update.user.screen_name;
   username.appendChild(q12.t(update.user.screen_name));
